@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Peer.js Video Chat</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    video { width: 300px; margin: 10px; }
+    input { padding: 5px; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Video Chat cu Peer.js</h2>
+
+  <p>ID-ul tău: <span id="my-id"></span></p>
+  <input type="text" id="peer-id" placeholder="ID-ul prietenului">
+  <button onclick="call()">Apelează</button>
+
+  <br>
+  <video id="localVideo" autoplay muted></video>
+  <video id="remoteVideo" autoplay></video>
+
+  <script>
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const myIdSpan = document.getElementById('my-id');
+    const peer = new Peer(); // creează conexiunea la serverul PeerJS public
+
+    // Arată ID-ul tău când e gata conexiunea
+    peer.on('open', id => {
+      myIdSpan.textContent = id;
+    });
+
+    // Obține media locală (video + audio)
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+      localVideo.srcObject = stream;
+
+      // Răspunde la apeluri primite
+      peer.on('call', call => {
+        call.answer(stream); // răspunde cu stream-ul local
+        call.on('stream', remoteStream => {
+          remoteVideo.srcObject = remoteStream;
+        });
+      });
+
+      // Salvează stream-ul local pentru apel
+      window.call = () => {
+        const friendId = document.getElementById('peer-id').value;
+        const call = peer.call(friendId, stream);
+        call.on('stream', remoteStream => {
+          remoteVideo.srcObject = remoteStream;
+        });
+      };
+    });
+  </script>
+</body>
+</html>
